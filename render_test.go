@@ -2,8 +2,43 @@ package main
 
 import (
 	"encoding/binary"
+	"image"
 	"testing"
 )
+
+func TestLoadingTitleMatchesVisibleMenuLettering(t *testing.T) {
+	art, err := loadArtwork()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, panel := range [][2]int{{480, 800}, {480, 720}, {320, 480}, {240, 320}} {
+		width, height := panel[0], panel[1]
+		worldHeight := playfieldHeight(width, height)
+		loading, menu := newCanvas(worldHeight, nil), newCanvas(worldHeight, nil)
+		loading.drawLoading() // Deliberately has no artwork available.
+		menu.light = fadeSteps
+		menu.centered(&art.logo, titleLogoBounds(worldHeight).y)
+		d := display{mode: fbVariable{Width: uint32(width), Height: uint32(height)},
+			bytes: 2, stride: width * 2, nativeRGB565: true, memory: make([]byte, width*height*2)}
+		d.configure(worldHeight)
+		letterBounds := func(c *canvas) image.Rectangle {
+			d.drawPage(c, 0)
+			var area image.Rectangle
+			for y := 0; y < height; y++ {
+				for x := 0; x < width; x++ {
+					if binary.LittleEndian.Uint16(d.memory[(y*width+x)*2:]) == 0xff9a {
+						area = area.Union(image.Rect(x, y, x+1, y+1))
+					}
+				}
+			}
+			return area
+		}
+		got, want := letterBounds(loading), letterBounds(menu)
+		if want.Empty() || got != want {
+			t.Errorf("%dx%d: loading lettering %v, menu lettering %v", width, height, got, want)
+		}
+	}
+}
 
 func TestBackgroundScrollPreservesSingleDevicePixels(t *testing.T) {
 	art, err := loadArtwork()

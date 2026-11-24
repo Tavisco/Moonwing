@@ -5,6 +5,13 @@ func titleLogoBounds(height int) bounds {
 	return bounds{(sceneWidth - logoWidth) / 2, floor * 21 / 100, logoWidth, logoHeight}
 }
 
+func titleLetteringBounds(height int) bounds {
+	logo := titleLogoBounds(height)
+	// logo.png's cream lettering occupies (2,3)-(88,18) inside its 89x24
+	// canvas. The menu draws it at 2x; match the ink, not transparent padding.
+	return bounds{logo.x + 4, logo.y + 6, 172, 30}
+}
+
 // Fit the scene with one scale for both axes. Unusually short/wide panels
 // get margins rather than distorted artwork or an unplayable scene.
 func sceneViewport(width, height, sceneHeight int) bounds {

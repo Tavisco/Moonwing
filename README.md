@@ -8,8 +8,9 @@ visuals come from the Moonwing artwork embedded in the executable.
 An asset-free loading screen appears as soon as the display is ready, before
 input discovery, score loading, and artwork decoding. It switches straight
 to the menu when initialization finishes, with no minimum display time.
-Its MOONWING heading uses built-in bitmap text in the menu logo's size and
-position, so startup does not need to decode the logo image.
+Its MOONWING heading uses built-in bitmap text matching the size and position
+of the menu logo's visible lettering, excluding the image's transparent
+padding, so startup does not need to decode the logo image.
 
 Simulation advances in fixed 16.667 ms steps, retaining fractional elapsed
 time and limiting catch-up work after a slow frame. Presentation follows

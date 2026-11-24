@@ -27,7 +27,7 @@ func (c *canvas) drawLoading() {
 	for i := range c.pixels {
 		c.pixels[i] = background
 	}
-	c.textInBounds("MOONWING", titleLogoBounds(c.height), 0xff9a)
+	c.textInBounds("MOONWING", titleLetteringBounds(c.height), 0xff9a)
 	c.center("LOADING...", sceneWidth/2, (c.height-14)/2, 2, foreground)
 }
 
