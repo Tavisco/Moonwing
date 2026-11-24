@@ -1,0 +1,17 @@
+# macOS metadata
+.DS_Store
+._*
+
+# Generated Moonwing executable, install archives, and source packages
+/dist/
+
+# Compiled files and Go test output
+*.o
+*.a
+*.test
+coverage.out
+
+# Editor temporary files
+*.swp
+*.swo
+*~

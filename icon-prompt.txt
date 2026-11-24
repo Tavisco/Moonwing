@@ -1,0 +1,11 @@
+Generated with the built-in imagegen tool.
+
+Use case: logo-brand
+Asset type: square launcher icon for Moonwing, a tiny pixel-art bird flying arcade game.
+Primary request: create one polished, instantly readable pixel-art app icon that matches a retro game with a deep indigo and muted purple night sky, a warm peach moon and a tiny golden bird.
+Subject: a single charming plump golden-yellow bird in side profile flying to the right, with an ivory face and belly, one large simple black eye, a short coral-orange beak, and a small lifted wing. Keep it recognizably a bird and make its silhouette the dominant focal point. A simple warm peach crescent moon arcs behind the bird, framing its head and raised wing.
+Style/medium: crisp carefully designed old-school pixel art, consistent chunky square pixels on a 64-by-64 logical pixel grid enlarged cleanly; flat limited palette with just a few stepped shading tones, dark plum outlines.
+Composition/framing: square opaque edge-to-edge deep indigo background. Center the compact bird-and-moon emblem with generous clear space around it, occupying about 75 percent of the canvas. Two or three tiny pixel stars only. Excellent legibility when reduced to a 48-pixel launcher icon.
+Color palette: deep navy #151329, muted purple #42305a, lavender #9586be, warm moon peach #f6bc80, golden yellow #f3b63e, ivory #fff0cd, coral orange #e98047.
+Constraints: no letters, no text, no typography, no watermark, no frame, no UI, no device mockup, no pipes, no scenery, no rounded app-tile outer corners, no gradients, no blur, no photographic texture. The result is the actual icon asset, not a presentation of an icon.
+
