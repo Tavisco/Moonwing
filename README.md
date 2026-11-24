@@ -41,6 +41,8 @@ The raster keeps two horizontal columns per simulation unit. This preserves
 one-device-pixel background movement on the 480px panels without changing
 parallax speed, sprite proportions, or touch coordinates. Artwork is widened
 once at load time; the native RGB565 presentation path copies complete rows.
+Bird rotation uses a static 0.1-degree coefficient table and incremental
+integer sampling; the simulation's angle and flight integration are unchanged.
 
 Backgrounds keep the same pixel scale as the sprites and are anchored above
 the ground. Shorter panels crop sky from the top; taller panels reveal more

@@ -95,18 +95,26 @@ func (c *canvas) bird(s *sprite, x, y int, angle float32) {
 		c.blit(s, x-s.width/2, y-s.height/2, c.height)
 		return
 	}
-	sine, cosine := math.Sincos(float64(angle) * math.Pi / 180)
-	sin, cos := int(math.Round(sine*1024)), int(math.Round(cosine*1024))
-	raster := s.rasterSprite()
+	sin, cos := rotationCoefficients(angle)
 	const radius = 21 // the half diagonal of a 34×24 sprite
+	left, right := max(-radius, -x), min(radius, sceneWidth-1-x)
 	for dy := max(-radius, -y); dy <= radius && y+dy < c.height; dy++ {
-		for dx := max(-radius, -x); dx <= radius && x+dx < sceneWidth; dx++ {
-			sx := ((dx*cos + dy*sin + 512) >> 10) + s.width/2
-			sy := ((dy*cos - dx*sin + 512) >> 10) + s.height/2
+		sourceX, sourceY := left*cos+dy*sin+512, dy*cos-left*sin+512
+		for dx := left; dx <= right; dx++ {
+			sx := (sourceX >> 10) + s.width/2
+			sy := (sourceY >> 10) + s.height/2
 			if sx >= 0 && sx < s.width && sy >= 0 && sy < s.height {
 				pixel := (y+dy)*rasterWidth + (x+dx)*2
-				raster.blitRow(c.pixels[pixel:pixel+2], (sy*s.width+sx)*2)
+				from := sy*s.width + sx
+				color := s.pixels[from]
+				if s.alpha == nil || s.alpha[from] == 255 {
+					c.pixels[pixel], c.pixels[pixel+1] = color, color
+				} else if alpha := s.alpha[from]; alpha != 0 {
+					c.pixels[pixel] = blend565(c.pixels[pixel], color, alpha)
+					c.pixels[pixel+1] = blend565(c.pixels[pixel+1], color, alpha)
+				}
 			}
+			sourceX, sourceY = sourceX+cos, sourceY-sin
 		}
 	}
 }
