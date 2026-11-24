@@ -64,8 +64,10 @@ func TestEmbeddedPlayButtonRenders(t *testing.T) {
 			if button.alpha != nil {
 				want = blend565(bg, want, button.alpha[i])
 			}
-			if got := c.pixels[y*sceneWidth+x]; got != want {
-				t.Fatalf("button pixel %d,%d = %04x, want %04x", col, row, got, want)
+			for sub := 0; sub < 2; sub++ {
+				if got := c.pixels[y*rasterWidth+x*2+sub]; got != want {
+					t.Fatalf("button pixel %d,%d = %04x, want %04x", col, row, got, want)
+				}
 			}
 		}
 	}

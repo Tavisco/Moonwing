@@ -48,7 +48,7 @@ func (d *display) configure(height int) {
 	d.rowWords = make([]uint32, (int(d.mode.Width)*d.bytes+3)/4)
 	d.sourceX = make([]int, d.view.w)
 	for x := range d.sourceX {
-		d.sourceX[x] = x * sceneWidth / d.view.w
+		d.sourceX[x] = x * rasterWidth / d.view.w
 	}
 }
 
@@ -98,7 +98,6 @@ func (d *display) drawPage(c *canvas, offset int) {
 	palette := &d.palette[c.light]
 	direct := c.light == fadeSteps && d.nativeRGB565
 	left, right := d.view.x*d.bytes, (d.view.x+d.view.w)*d.bytes
-	paired := d.bytes == 2 && d.view.w == 2*sceneWidth && left%4 == 0
 	staged := unsafe.Slice((*byte)(unsafe.Pointer(&d.rowWords[0])), rowBytes)
 	clear(staged)
 	row := staged[left:right]
@@ -115,23 +114,11 @@ func (d *display) drawPage(c *canvas, offset int) {
 			copy(destination, staged)
 			continue
 		}
-		source := c.pixels[sourceY*sceneWidth : (sourceY+1)*sceneWidth]
+		source := c.pixels[sourceY*rasterWidth : (sourceY+1)*rasterWidth]
 		switch {
-		case paired && direct:
-			pairs := unsafe.Slice((*uint32)(unsafe.Pointer(&row[0])), sceneWidth)
-			for x, color := range source {
-				pixel := uint32(color)
-				pairs[x] = pixel | pixel<<16
-			}
-		case paired:
-			pairs := unsafe.Slice((*uint32)(unsafe.Pointer(&row[0])), sceneWidth)
-			for x, color := range source {
-				pixel := palette.word(color)
-				pairs[x] = pixel | pixel<<16
-			}
 		case direct:
 			words := unsafe.Slice((*uint16)(unsafe.Pointer(&row[0])), d.view.w)
-			if d.view.w == sceneWidth {
+			if d.view.w == rasterWidth {
 				copy(words, source)
 			} else {
 				for x, sx := range d.sourceX {

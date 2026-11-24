@@ -45,9 +45,9 @@ func TestFramebufferScaleAndOffsets(t *testing.T) {
 							}
 							var want uint32
 							if d.view.contains(point{x, y}) {
-								sx := (x - d.view.x) * sceneWidth / d.view.w
+								sx := (x - d.view.x) * rasterWidth / d.view.w
 								sy := (y - d.view.y) * c.height / d.view.h
-								want = d.palette[light].word(c.pixels[sy*sceneWidth+sx])
+								want = d.palette[light].word(c.pixels[sy*rasterWidth+sx])
 							}
 							for b := 0; b < d.bytes; b++ {
 								if got := d.memory[at+b]; got != byte(want>>uint(8*b)) {

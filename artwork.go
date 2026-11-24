@@ -25,6 +25,25 @@ type sprite struct {
 	width, height int
 	pixels        []uint16
 	alpha         []uint8 // nil for opaque images
+	raster        *sprite // twice the horizontal resolution, prepared at load time
+}
+
+func (s *sprite) rasterSprite() *sprite {
+	if s.raster != nil {
+		return s.raster
+	}
+	r := &sprite{width: s.width * 2, height: s.height, pixels: make([]uint16, len(s.pixels)*2)}
+	if s.alpha != nil {
+		r.alpha = make([]uint8, len(s.alpha)*2)
+	}
+	for i, pixel := range s.pixels {
+		r.pixels[2*i], r.pixels[2*i+1] = pixel, pixel
+		if r.alpha != nil {
+			r.alpha[2*i], r.alpha[2*i+1] = s.alpha[i], s.alpha[i]
+		}
+	}
+	s.raster = r
+	return r
 }
 
 type artwork struct {
@@ -128,6 +147,7 @@ func decodeSprite(b []byte, width, height int) (sprite, error) {
 			}
 		}
 	}
+	result.rasterSprite()
 	return result, nil
 }
 

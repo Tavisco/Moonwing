@@ -50,11 +50,11 @@ func TestBackgroundCropsInsteadOfStretching(t *testing.T) {
 		c := newCanvas(height, nil)
 		floor := newGame(height, 0, 1).floor
 		top := bg.height - floorHeight - floor
-		c.tile(&bg, 73, top, 0, floor)
+		c.tile(&bg, 73*2, top, 0, floor)
 		for y := 0; y < floor; y++ {
-			for x := 0; x < sceneWidth; x++ {
-				want := bg.pixels[max(0, top+y)*bg.width+(x+73)%bg.width]
-				if got := c.pixels[y*sceneWidth+x]; got != want {
+			for x := 0; x < rasterWidth; x++ {
+				want := bg.pixels[max(0, top+y)*bg.width+(x/2+73)%bg.width]
+				if got := c.pixels[y*rasterWidth+x]; got != want {
 					t.Fatalf("height %d, background %d,%d: %04x, want %04x", height, x, y, got, want)
 				}
 			}

@@ -5,6 +5,10 @@ import (
 	"strconv"
 )
 
+// The game remains 240 units wide. Two raster columns per unit retain the
+// background's half-unit movement without changing sprite sizes or physics.
+const rasterWidth = sceneWidth * 2
+
 type canvas struct {
 	height int
 	pixels []uint16
@@ -13,14 +17,14 @@ type canvas struct {
 }
 
 func newCanvas(height int, art *artwork) *canvas {
-	return &canvas{height: height, pixels: make([]uint16, sceneWidth*height), art: art}
+	return &canvas{height: height, pixels: make([]uint16, rasterWidth*height), art: art}
 }
 
 func (c *canvas) rect(x, y, w, h int, col uint16) {
-	left, right := max(0, x), min(sceneWidth, x+w)
+	left, right := max(0, x)*2, min(sceneWidth, x+w)*2
 	top, bottom := max(0, y), min(c.height, y+h)
 	for row := top; row < bottom; row++ {
-		for at := row*sceneWidth + left; at < row*sceneWidth+right; at++ {
+		for at := row*rasterWidth + left; at < row*rasterWidth+right; at++ {
 			c.pixels[at] = col
 		}
 	}
@@ -53,27 +57,30 @@ func (s *sprite) blitRow(dst []uint16, from int) {
 }
 
 func (c *canvas) blit(s *sprite, x, y, bottom int) {
-	left, right := max(0, x), min(sceneWidth, x+s.width)
+	x *= 2
+	left, right := max(0, x), min(rasterWidth, x+s.width*2)
 	if left >= right {
 		return
 	}
+	s = s.rasterSprite()
 	bottom = min(bottom, c.height, y+s.height)
 	for destY := max(0, y); destY < bottom; destY++ {
-		dst := c.pixels[destY*sceneWidth+left : destY*sceneWidth+right]
+		dst := c.pixels[destY*rasterWidth+left : destY*rasterWidth+right]
 		s.blitRow(dst, (destY-y)*s.width+left-x)
 	}
 }
 
 func (c *canvas) tile(s *sprite, startX, sourceTop, top, bottom int) {
+	s = s.rasterSprite()
 	startX %= s.width
-	first := min(s.width-startX, sceneWidth)
+	first := min(s.width-startX, rasterWidth)
 	for y := top; y < bottom; y++ {
 		// Crop the background at its native scale. Extend the sky's first
 		// row on tall panels instead of stretching every row of the image.
 		srcY := min(max(sourceTop+y-top, 0), s.height-1)
-		dst := c.pixels[y*sceneWidth : (y+1)*sceneWidth]
+		dst := c.pixels[y*rasterWidth : (y+1)*rasterWidth]
 		s.blitRow(dst[:first], srcY*s.width+startX)
-		if first < sceneWidth {
+		if first < rasterWidth {
 			s.blitRow(dst[first:], srcY*s.width)
 		}
 	}
@@ -90,14 +97,15 @@ func (c *canvas) bird(s *sprite, x, y int, angle float32) {
 	}
 	sine, cosine := math.Sincos(float64(angle) * math.Pi / 180)
 	sin, cos := int(math.Round(sine*1024)), int(math.Round(cosine*1024))
+	raster := s.rasterSprite()
 	const radius = 21 // the half diagonal of a 34×24 sprite
 	for dy := max(-radius, -y); dy <= radius && y+dy < c.height; dy++ {
 		for dx := max(-radius, -x); dx <= radius && x+dx < sceneWidth; dx++ {
 			sx := ((dx*cos + dy*sin + 512) >> 10) + s.width/2
 			sy := ((dy*cos - dx*sin + 512) >> 10) + s.height/2
 			if sx >= 0 && sx < s.width && sy >= 0 && sy < s.height {
-				pixel := (y+dy)*sceneWidth + x + dx
-				s.blitRow(c.pixels[pixel:pixel+1], sy*s.width+sx)
+				pixel := (y+dy)*rasterWidth + (x+dx)*2
+				raster.blitRow(c.pixels[pixel:pixel+2], (sy*s.width+sx)*2)
 			}
 		}
 	}
@@ -171,8 +179,8 @@ func (c *canvas) draw(g *game) {
 	if bg.alpha != nil || a.ground.alpha != nil {
 		clear(c.pixels)
 	}
-	c.tile(bg, g.background/2, bg.height-floorHeight-g.floor, 0, g.floor)
-	c.tile(&a.ground, g.scroll, 0, g.floor, c.height)
+	c.tile(bg, g.background, bg.height-floorHeight-g.floor, 0, g.floor)
+	c.tile(&a.ground, g.scroll*2, 0, g.floor, c.height)
 	if g.state >= flying {
 		for _, p := range g.gates {
 			c.blit(&a.upper, p.x, p.gapTop-gateHeight, g.floor)
