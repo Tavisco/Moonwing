@@ -2,7 +2,7 @@
   "protocol": 1,
   "id": "moonwing",
   "name": "Moonwing",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "exec": "moonwing",
   "icon": "icon.png"
 }

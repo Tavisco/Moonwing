@@ -31,6 +31,12 @@ func run() error {
 	}
 	worldHeight := playfieldHeight(panelWidth, panelHeight)
 	d.configure(worldHeight)
+	// Present before input discovery, score I/O, or PNG decoding. Reuse this
+	// canvas for the menu so loading needs no assets or extra frame buffer.
+	c := newCanvas(worldHeight, nil)
+	c.drawLoading()
+	d.present(c)
+
 	inputs, err := openInputs(os.Getenv("COMPAS_BOARD"), panelWidth, panelHeight)
 	if err != nil {
 		return err
@@ -56,7 +62,9 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	c := newCanvas(worldHeight, art)
+	c.art = art
+	// Loading has already covered startup; show the ready menu immediately.
+	g.fadeTick = -1
 	c.draw(g)
 	d.present(c)
 

@@ -5,6 +5,10 @@ flight and scoring follow the supplied `flappybird.c`, including the original
 floating-point integration, gates, and collision order. Its
 visuals come from the Moonwing artwork embedded in the executable.
 
+An asset-free loading screen appears as soon as the display is ready, before
+input discovery, score loading, and artwork decoding. It switches straight
+to the menu when initialization finishes, with no minimum display time.
+
 Simulation advances in fixed 16.667 ms steps, retaining fractional elapsed
 time and limiting catch-up work after a slow frame. Presentation follows
 blocking display refreshes, with a deadline limiter for drivers that do not

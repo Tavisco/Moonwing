@@ -20,6 +20,16 @@ func newCanvas(height int, art *artwork) *canvas {
 	return &canvas{height: height, pixels: make([]uint16, rasterWidth*height), art: art}
 }
 
+func (c *canvas) drawLoading() {
+	const background uint16 = 0x10c4
+	const foreground uint16 = 0xbd59
+	c.light = fadeSteps
+	for i := range c.pixels {
+		c.pixels[i] = background
+	}
+	c.center("LOADING...", sceneWidth/2, (c.height-14)/2, 2, foreground)
+}
+
 func (c *canvas) rect(x, y, w, h int, col uint16) {
 	left, right := max(0, x)*2, min(sceneWidth, x+w)*2
 	top, bottom := max(0, y), min(c.height, y+h)
