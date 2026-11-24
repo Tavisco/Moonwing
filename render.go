@@ -27,6 +27,7 @@ func (c *canvas) drawLoading() {
 	for i := range c.pixels {
 		c.pixels[i] = background
 	}
+	c.textInBounds("MOONWING", titleLogoBounds(c.height), 0xff9a)
 	c.center("LOADING...", sceneWidth/2, (c.height-14)/2, 2, foreground)
 }
 
@@ -178,6 +179,25 @@ func (c *canvas) text(s string, x, y, scale int, col uint16) {
 	}
 }
 
+// Fit built-in text to an existing layout box without decoding an image or
+// allocating a temporary sprite. All glyphs are drawn directly as rectangles.
+func (c *canvas) textInBounds(s string, area bounds, col uint16) {
+	columns := 6*len(s) - 1
+	for i := 0; i < len(s); i++ {
+		for row, bits := range glyphs[s[i]] {
+			for column := 0; column < 5; column++ {
+				if bits&(1<<uint(4-column)) == 0 {
+					continue
+				}
+				left := (6*i + column) * area.w / columns
+				right := (6*i + column + 1) * area.w / columns
+				top, bottom := row*area.h/7, (row+1)*area.h/7
+				c.rect(area.x+left, area.y+top, right-left, bottom-top, col)
+			}
+		}
+	}
+}
+
 func (c *canvas) center(s string, x, y, scale int, col uint16) {
 	c.text(s, x-(6*len(s)-1)*scale/2, y, scale, col)
 }
@@ -232,7 +252,7 @@ func (c *canvas) draw(g *game) {
 
 	switch g.state {
 	case title:
-		c.centered(&a.logo, g.floor*21/100)
+		c.centered(&a.logo, titleLogoBounds(c.height).y)
 		b := g.startBounds()
 		c.blit(&a.play, b.x, b.y, c.height)
 		c.center("BEST "+strconv.Itoa(g.best), sceneWidth/2, g.floor+24, 2, muted)

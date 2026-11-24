@@ -1,5 +1,10 @@
 package main
 
+func titleLogoBounds(height int) bounds {
+	floor := (height/2)*2 - floorHeight
+	return bounds{(sceneWidth - logoWidth) / 2, floor * 21 / 100, logoWidth, logoHeight}
+}
+
 // Fit the scene with one scale for both axes. Unusually short/wide panels
 // get margins rather than distorted artwork or an unplayable scene.
 func sceneViewport(width, height, sceneHeight int) bounds {

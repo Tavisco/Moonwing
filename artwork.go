@@ -10,6 +10,8 @@ import (
 
 const (
 	maxPNGDimension  = 1024
+	logoWidth        = 178
+	logoHeight       = 48
 	playButtonWidth  = 104
 	playButtonHeight = 58
 	scoreBoardWidth  = 226
@@ -93,7 +95,7 @@ func loadArtwork() (*artwork, error) {
 		a.medals[i] = load("medal-"+name+".png", 22, 22)
 	}
 
-	a.logo = load("logo.png", 178, 48)
+	a.logo = load("logo.png", logoWidth, logoHeight)
 	a.ready = load("get-ready.png", 184, 50)
 	a.howTo = load("how-to.png", 57, 49)
 	a.over = load("game-over.png", 192, 42)
