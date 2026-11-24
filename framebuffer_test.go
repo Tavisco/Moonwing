@@ -61,3 +61,14 @@ func TestFramebufferScaleAndOffsets(t *testing.T) {
 		}
 	}
 }
+
+func TestFramebufferPresentationReusesRowStorage(t *testing.T) {
+	d := display{mode: fbVariable{Width: 480, Height: 800}, bytes: 2,
+		stride: 960, nativeRGB565: true, memory: make([]byte, 960*800)}
+	d.configure(400)
+	c := newCanvas(400, nil)
+	c.light = fadeSteps
+	if allocations := testing.AllocsPerRun(10, func() { d.drawPage(c, 0) }); allocations != 0 {
+		t.Fatalf("presentation allocated %v times per frame", allocations)
+	}
+}

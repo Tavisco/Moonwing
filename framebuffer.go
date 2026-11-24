@@ -40,10 +40,12 @@ type display struct {
 	nativeRGB565        bool
 	view                bounds
 	sourceX             []int
+	rowWords            []uint32 // aligned, reusable RAM staging for a full output row
 }
 
 func (d *display) configure(height int) {
 	d.view = sceneViewport(int(d.mode.Width), int(d.mode.Height), height)
+	d.rowWords = make([]uint32, (int(d.mode.Width)*d.bytes+3)/4)
 	d.sourceX = make([]int, d.view.w)
 	for x := range d.sourceX {
 		d.sourceX[x] = x * sceneWidth / d.view.w
@@ -96,22 +98,21 @@ func (d *display) drawPage(c *canvas, offset int) {
 	palette := &d.palette[c.light]
 	direct := c.light == fadeSteps && d.nativeRGB565
 	left, right := d.view.x*d.bytes, (d.view.x+d.view.w)*d.bytes
-	paired := d.bytes == 2 && d.view.w == 2*sceneWidth && (start+left)%4 == 0 && d.stride%4 == 0
+	paired := d.bytes == 2 && d.view.w == 2*sceneWidth && left%4 == 0
+	staged := unsafe.Slice((*byte)(unsafe.Pointer(&d.rowWords[0])), rowBytes)
+	clear(staged)
+	row := staged[left:right]
 	previousY := -1
-	var previous []byte
 	for y := 0; y < height; y++ {
 		at := start + y*d.stride
-		row := d.memory[at : at+rowBytes]
+		destination := d.memory[at : at+rowBytes]
 		if y < d.view.y || y >= d.view.y+d.view.h {
-			clear(row)
+			clear(destination)
 			continue
 		}
-		clear(row[:left])
-		clear(row[right:])
-		row = row[left:right]
 		sourceY := (y - d.view.y) * c.height / d.view.h
 		if sourceY == previousY {
-			copy(row, previous)
+			copy(destination, staged)
 			continue
 		}
 		source := c.pixels[sourceY*sceneWidth : (sourceY+1)*sceneWidth]
@@ -154,6 +155,9 @@ func (d *display) drawPage(c *canvas, offset int) {
 				words[x] = palette.word(source[sx])
 			}
 		}
-		previous, previousY = row, sourceY
+		// Both the first row and its vertical duplicates are copied from
+		// cached RAM. Never read previously written framebuffer pixels.
+		copy(destination, staged)
+		previousY = sourceY
 	}
 }
