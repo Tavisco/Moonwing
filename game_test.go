@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"testing"
-	"time"
 )
 
 func TestOriginalPhysicsTrace(t *testing.T) {
@@ -74,16 +73,6 @@ func traceInput(g *game, tick, profile int) {
 			(profile%4 == 2 && tick%19 == 0) ||
 			(profile%4 == 3 && g.birdY >= target && g.speed >= 0) {
 			g.action()
-		}
-	}
-}
-
-func TestOriginalTickThresholds(t *testing.T) {
-	for _, tc := range []struct {
-		us, steps int
-	}{{16000, 1}, {25001, 1}, {49999, 1}, {50000, 3}, {58335, 4}, {250000, 4}, {250001, 0}} {
-		if actual := stepsFor(time.Duration(tc.us) * time.Microsecond); actual != tc.steps {
-			t.Errorf("%d us produced %d steps, want %d", tc.us, actual, tc.steps)
 		}
 	}
 }

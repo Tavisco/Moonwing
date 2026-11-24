@@ -63,20 +63,23 @@ func run() error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	defer signal.Stop(stop)
-	ticker := time.NewTicker(tickPeriod)
-	defer ticker.Stop()
 	last := time.Now()
+	pacer := framePacer{period: d.mode.refreshPeriod(), next: last}
+	var clock simulationClock
+	timer := time.NewTimer(0)
+	defer timer.Stop()
 	for {
 		select {
 		case <-stop:
 			return nil
-		case <-ticker.C:
+		case <-timer.C:
 		}
 		now := time.Now()
-		steps := stepsFor(now.Sub(last))
+		steps, stalled := clock.advance(now.Sub(last))
 		last = now
 		oldState, oldFade := g.state, g.fadeTick
-		if steps == 0 && g.state == flying {
+		wasAnimated := g.animated()
+		if stalled && g.state == flying {
 			g.state = paused
 		}
 
@@ -112,10 +115,20 @@ func run() error {
 				save()
 			}
 		}
-		animated := g.state != paused && (g.state != results || g.overTick <= overDoneAt)
-		if oldState != g.state || oldFade != g.fadeTick || (animated && steps > 0) {
+		animated := g.animated()
+		// A catch-up batch may cross the end of the results animation. Draw
+		// its completed score once before allowing presentation to go idle.
+		changed := oldState != g.state || oldFade != g.fadeTick || (wasAnimated && steps > 0)
+		if changed {
 			c.draw(g)
-			d.present(c)
 		}
+		var flipWait time.Duration
+		if changed || animated {
+			// Keep page flips locked to refresh even when the fixed-step
+			// simulation has no new step for this display frame.
+			flipWait = d.present(c)
+		}
+		pacer.finish(time.Now(), flipWait)
+		timer.Reset(max(0, time.Until(pacer.next)))
 	}
 }

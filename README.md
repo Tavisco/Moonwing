@@ -2,8 +2,13 @@
 
 Moonwing is a silent arcade game for the Compás external-app launcher. Its
 flight and scoring follow the supplied `flappybird.c`, including the original
-floating-point integration, gates, collision order, and timer thresholds. Its
+floating-point integration, gates, and collision order. Its
 visuals come from the Moonwing artwork embedded in the executable.
+
+Simulation advances in fixed 16.667 ms steps, retaining fractional elapsed
+time and limiting catch-up work after a slow frame. Presentation follows
+blocking display refreshes, with a deadline limiter for drivers that do not
+wait on page flips. Long stalls pause a run instead of advancing it unseen.
 
 ## Install
 

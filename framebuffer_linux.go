@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -10,6 +11,7 @@ const (
 	fbGetVariable = 0x4600
 	fbGetFixed    = 0x4602
 	fbPan         = 0x4606
+	fbActivateVBL = 16
 )
 
 func ioctl(fd int, request uintptr, data unsafe.Pointer) error {
@@ -34,7 +36,7 @@ func openDisplay() (*display, error) {
 }
 
 func setupDisplay(fd int) (*display, error) {
-	d := &display{fd: fd, back: -1}
+	d := &display{fd: fd, back: -1, panActivate: fbActivateVBL}
 	var fixed fbFixed
 	if err := ioctl(fd, fbGetVariable, unsafe.Pointer(&d.mode)); err != nil {
 		return nil, fmt.Errorf("read framebuffer mode: %w", err)
@@ -88,20 +90,29 @@ func (d *display) close() {
 	syscall.Close(d.fd)
 }
 
-func (d *display) present(c *canvas) {
+func (d *display) present(c *canvas) time.Duration {
 	if d.back < 0 {
 		d.drawPage(c, int(d.mode.Y))
-		return
+		return 0
 	}
 	d.drawPage(c, d.back)
 	next := d.mode
 	next.Y = uint32(d.back)
-	next.Activate = 0
-	if err := ioctl(d.fd, fbPan, unsafe.Pointer(&next)); err != nil {
+	next.Activate = d.panActivate
+	panStart := time.Now()
+	err := ioctl(d.fd, fbPan, unsafe.Pointer(&next))
+	if err != nil && d.panActivate != 0 {
+		// Some fbdev drivers reject VBL activation. Retain page flipping
+		// with immediate activation and let the deadline pacer limit it.
+		d.panActivate, next.Activate = 0, 0
+		err = ioctl(d.fd, fbPan, unsafe.Pointer(&next))
+	}
+	if err != nil {
 		d.back = -1
 		d.drawPage(c, int(d.mode.Y))
-		return
+		return 0
 	}
 	d.back = int(d.mode.Y)
 	d.mode.Y = next.Y
+	return time.Since(panStart)
 }

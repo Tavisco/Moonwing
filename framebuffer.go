@@ -36,6 +36,7 @@ type display struct {
 	stride, bytes, back int
 	memory              []byte
 	palette             [fadeSteps + 1]pixelPalette
+	panActivate         uint32
 	nativeRGB565        bool
 	view                bounds
 	sourceX             []int

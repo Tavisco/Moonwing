@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // These units and transitions mirror flappybird.c. One simulation unit
@@ -37,7 +36,6 @@ const (
 	overCountAt           = 78
 	overDoneAt            = 123
 	fadeSteps             = 10
-	tickPeriod            = 16 * time.Millisecond
 )
 
 type phase uint8
@@ -189,6 +187,10 @@ func (g *game) canStart() bool {
 	return g.fadeTick < 0 && (g.state == title || (g.state == results && g.overTick >= overCountAt))
 }
 
+func (g *game) animated() bool {
+	return g.state != paused && (g.state != results || g.overTick <= overDoneAt)
+}
+
 func (g *game) action() {
 	if g.fadeTick >= 0 {
 		return
@@ -308,20 +310,6 @@ func (g *game) step() bool {
 		}
 	}
 	return g.state == results && g.overTick == overDoneAt && g.bestPending
-}
-
-// The original steps once per timer callback for regular and mildly late
-// ticks. A longer gap catches up by up to four steps or pauses after a stall.
-func stepsFor(elapsed time.Duration) int {
-	us := elapsed.Microseconds()
-	switch {
-	case us > 250000:
-		return 0
-	case us >= 50000:
-		return min(int((us+16667/2)/16667), 4)
-	default:
-		return 1
-	}
 }
 
 // Match the panel's aspect ratio so a scene unit has the same size on both
