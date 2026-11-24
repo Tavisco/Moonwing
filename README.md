@@ -76,6 +76,16 @@ archive includes a separate `moonwing-source` folder for rebuilding. To build
 the app folder by itself, run `make`. Run `make test` to validate rendering,
 touch routing, and the simulation against the C reference trace.
 
+For a rotation performance comparison, run `make debug-norotation`. This
+creates `dist/moonwing-compas-norotation.zip`, with bird rotation rendering
+compiled out. The bird stays level; wing animation and simulation are
+unchanged. It uses the regular optimization flags and identifies itself as
+**Moonwing (No Rotation)**, with a `-norotate` version suffix. Run
+`go test -tags=norotation ./...` to check this variant.
+
+Install either build by replacing `.apps/moonwing` with its archive's
+`moonwing` folder. Restore the rotating bird using `moonwing-compas.zip`.
+
 The app uses the Compás external-app protocol v1. The 480×720 and 480×800
 playfields match the supplied code. Smaller screens use the same scale on
 both axes, including text and touch targets. Unusually short panels get

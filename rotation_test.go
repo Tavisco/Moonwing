@@ -62,7 +62,11 @@ func TestCachedBirdRotationMatchesReference(t *testing.T) {
 					got.pixels[i], want.pixels[i] = uint16(i), uint16(i)
 				}
 				got.bird(&s, position.x, position.y, angle)
-				referenceBird(want, &s, position.x, position.y, angle)
+				wantAngle := angle
+				if !birdRotationEnabled {
+					wantAngle = 0
+				}
+				referenceBird(want, &s, position.x, position.y, wantAngle)
 				for i := range got.pixels {
 					if got.pixels[i] != want.pixels[i] {
 						t.Fatalf("angle %v, position %v, raster pixel %d: %04x, want %04x", angle, position, i, got.pixels[i], want.pixels[i])

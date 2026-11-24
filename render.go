@@ -102,7 +102,7 @@ func (c *canvas) centered(s *sprite, y int) {
 }
 
 func (c *canvas) bird(s *sprite, x, y int, angle float32) {
-	if angle == 0 {
+	if !birdRotationEnabled || angle == 0 {
 		c.blit(s, x-s.width/2, y-s.height/2, c.height)
 		return
 	}

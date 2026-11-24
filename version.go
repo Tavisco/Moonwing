@@ -16,5 +16,5 @@ var appVersionLabel = func() string {
 	if err := json.Unmarshal(appManifest, &manifest); err != nil {
 		panic(err)
 	}
-	return "v" + manifest.Version
+	return "v" + manifest.Version + buildVersionSuffix
 }()
