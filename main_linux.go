@@ -73,7 +73,6 @@ func run() error {
 	defer signal.Stop(stop)
 	last := time.Now()
 	pacer := framePacer{period: d.mode.refreshPeriod(), next: last}
-	var clock simulationClock
 	timer := time.NewTimer(0)
 	defer timer.Stop()
 	for {
@@ -83,11 +82,11 @@ func run() error {
 		case <-timer.C:
 		}
 		now := time.Now()
-		steps, stalled := clock.advance(now.Sub(last))
+		advance := shouldAdvanceFrame(now.Sub(last))
 		last = now
 		oldState, oldFade := g.state, g.fadeTick
 		wasAnimated := g.animated()
-		if stalled && g.state == flying {
+		if !advance && g.state == flying {
 			g.state = paused
 		}
 
@@ -118,25 +117,23 @@ func run() error {
 		if len(inputs) == 0 {
 			return fmt.Errorf("all input devices disconnected")
 		}
-		for i := 0; i < steps; i++ {
+		if advance {
 			if g.step() {
 				save()
 			}
 		}
 		animated := g.animated()
-		// A catch-up batch may cross the end of the results animation. Draw
-		// its completed score once before allowing presentation to go idle.
-		changed := oldState != g.state || oldFade != g.fadeTick || (wasAnimated && steps > 0)
+		// Draw the completed results once before presentation goes idle.
+		changed := oldState != g.state || oldFade != g.fadeTick || (wasAnimated && advance)
 		if changed {
 			c.draw(g)
 		}
 		var flipWait time.Duration
 		if changed || animated {
-			// Keep page flips locked to refresh even when the fixed-step
-			// simulation has no new step for this display frame.
 			flipWait = d.present(c)
 		}
-		pacer.finish(time.Now(), flipWait)
+		finished := time.Now()
+		pacer.finish(finished, flipWait)
 		timer.Reset(max(0, time.Until(pacer.next)))
 	}
 }

@@ -12,10 +12,15 @@ Its MOONWING heading uses built-in bitmap text matching the size and position
 of the menu logo's visible lettering, excluding the image's transparent
 padding, so startup does not need to decode the logo image.
 
-Simulation advances in fixed 16.667 ms steps, retaining fractional elapsed
-time and limiting catch-up work after a slow frame. Presentation follows
-blocking display refreshes, with a deadline limiter for drivers that do not
-wait on page flips. Long stalls pause a run instead of advancing it unseen.
+Simulation advances once per presented frame, following the panel's native
+refresh cadence. This avoids repeated frames and catch-up jumps from a
+fixed 60 Hz accumulator on panels such as the R1's roughly 61.33 Hz display.
+The per-step flight physics remain unchanged; on R1, native cadence runs
+about 2.2% faster than the previous 60 Hz simulation. Short late frames
+advance once, while stalls longer than 250 ms pause an active run.
+
+Presentation follows blocking display refreshes, with a deadline limiter
+for drivers that do not wait on page flips. Bird rotation remains enabled.
 
 ## Install
 
@@ -75,16 +80,6 @@ with software floating point and writes `dist/moonwing-compas.zip`. The
 archive includes a separate `moonwing-source` folder for rebuilding. To build
 the app folder by itself, run `make`. Run `make test` to validate rendering,
 touch routing, and the simulation against the C reference trace.
-
-For a rotation performance comparison, run `make debug-norotation`. This
-creates `dist/moonwing-compas-norotation.zip`, with bird rotation rendering
-compiled out. The bird stays level; wing animation and simulation are
-unchanged. It uses the regular optimization flags and identifies itself as
-**Moonwing (No Rotation)**, with a `-norotate` version suffix. Run
-`go test -tags=norotation ./...` to check this variant.
-
-Install either build by replacing `.apps/moonwing` with its archive's
-`moonwing` folder. Restore the rotating bird using `moonwing-compas.zip`.
 
 The app uses the Compás external-app protocol v1. The 480×720 and 480×800
 playfields match the supplied code. Smaller screens use the same scale on

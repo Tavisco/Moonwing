@@ -2,25 +2,13 @@ package main
 
 import "time"
 
-const (
-	simulationStep = 16667 * time.Microsecond
-	stallLimit     = 250 * time.Millisecond
-	maxCatchUp     = 4
-)
+const stallLimit = 250 * time.Millisecond
 
-type simulationClock struct{ remainder time.Duration }
-
-func (c *simulationClock) advance(elapsed time.Duration) (steps int, stalled bool) {
-	if elapsed > stallLimit {
-		c.remainder = 0
-		return 0, true
-	}
-	c.remainder += max(elapsed, 0)
-	steps = min(int(c.remainder/simulationStep), maxCatchUp)
-	// Drop excess whole steps after a slow frame, but retain fractional time.
-	// This bounds recovery work without accumulating an ever-growing backlog.
-	c.remainder %= simulationStep
-	return steps, false
+// Advance once per presented frame. Fractional-step accumulation at 60 Hz
+// repeats frames on panels such as R1's 61.33 Hz display, causing judder.
+// Long stalls still pause a run instead of advancing it unseen.
+func shouldAdvanceFrame(elapsed time.Duration) bool {
+	return elapsed <= stallLimit
 }
 
 type framePacer struct {

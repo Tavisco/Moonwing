@@ -5,35 +5,27 @@ import (
 	"time"
 )
 
-func TestSimulationClockRetainsFractionalTime(t *testing.T) {
-	var clock simulationClock
-	var elapsed time.Duration
-	total := 0
-	for _, gap := range []time.Duration{8 * time.Millisecond, 8 * time.Millisecond, 17 * time.Millisecond,
-		33 * time.Millisecond, 16 * time.Millisecond, 49 * time.Millisecond, 50 * time.Millisecond} {
-		elapsed += gap
-		steps, stalled := clock.advance(gap)
-		total += steps
-		if stalled || total != int(elapsed/simulationStep) {
-			t.Fatalf("after %v: %d steps, want %d (stalled=%v)", elapsed, total, elapsed/simulationStep, stalled)
+func TestEveryR1RefreshAdvancesSimulation(t *testing.T) {
+	const period = 16304 * time.Microsecond
+	for frame := 0; frame < 1000; frame++ {
+		if !shouldAdvanceFrame(period) {
+			t.Fatalf("frame %d repeated at R1's refresh interval", frame)
 		}
 	}
 }
 
-func TestSimulationClockBoundsRecoveryAndResetsAfterStall(t *testing.T) {
-	var clock simulationClock
-	if steps, stalled := clock.advance(10*simulationStep + simulationStep/2); steps != maxCatchUp || stalled {
-		t.Fatalf("slow frame: %d steps, stalled=%v", steps, stalled)
+func TestFrameAdvanceDoesNotAccumulateOrCatchUp(t *testing.T) {
+	for _, gap := range []time.Duration{0, 15 * time.Millisecond, 16304 * time.Microsecond,
+		18 * time.Millisecond, 33 * time.Millisecond, 65 * time.Millisecond, stallLimit} {
+		if !shouldAdvanceFrame(gap) {
+			t.Fatalf("frame gap %v did not receive its single update", gap)
+		}
 	}
-	if steps, _ := clock.advance(simulationStep - simulationStep/2); steps != 1 {
-		t.Fatalf("lost fractional time or retained excess backlog: %d steps", steps)
+	if shouldAdvanceFrame(stallLimit + time.Nanosecond) {
+		t.Fatal("a long stall should pause the active run")
 	}
-	clock.advance(simulationStep / 2)
-	if steps, stalled := clock.advance(stallLimit + 1); steps != 0 || !stalled {
-		t.Fatalf("stall: %d steps, stalled=%v", steps, stalled)
-	}
-	if steps, stalled := clock.advance(simulationStep / 2); steps != 0 || stalled {
-		t.Fatalf("stall left old simulation time: %d steps, stalled=%v", steps, stalled)
+	if !shouldAdvanceFrame(16304 * time.Microsecond) {
+		t.Fatal("the frame after a long stall did not resume with one update")
 	}
 }
 
@@ -64,8 +56,8 @@ func TestFramePacerAccountsForBlockingPresentation(t *testing.T) {
 func TestFramebufferRefreshPeriod(t *testing.T) {
 	mode := fbVariable{Width: 480, Height: 800, Left: 10, Right: 5, HSync: 5,
 		Upper: 100, Lower: 50, VSync: 50, PixelClock: 33334}
-	if got := mode.refreshPeriod(); got != simulationStep {
-		t.Fatalf("pixel clock and blanking produced %v, want %v", got, simulationStep)
+	if got := mode.refreshPeriod(); got != 16667*time.Microsecond {
+		t.Fatalf("pixel clock and blanking produced %v, want %v", got, 16667*time.Microsecond)
 	}
 	for _, invalid := range []fbVariable{{}, {Width: 480, Height: 800, PixelClock: 1},
 		{Width: 480, Height: 800, PixelClock: 33334, VMode: 1},
