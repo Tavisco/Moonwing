@@ -1,6 +1,7 @@
 # macOS metadata
 .DS_Store
 ._*
+.idea/
 
 # Generated Moonwing executable, install archives, and source packages
 /dist/
